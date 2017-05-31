@@ -1,0 +1,139 @@
+---
+title: "subtittle_text_mining"
+author: "Adam KolipiÒski, Ludwik Przyrowski"
+date: "27 maja 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=FALSE)
+```
+
+## biblioteki
+```{r, message=F}
+# calculations
+library(tm) 
+library(dplyr)
+library(SnowballC)
+
+#visualization
+library(wordcloud2)
+```
+## wstÍp
+
+èrÛd≥o dialogÛw https://nlds.soe.ucsc.edu/fc2
+```{r}
+
+path = file.path(getwd(), "dialogs/")
+category_list = dir(path)
+category_list
+```
+```{r}
+category_list = c('Action','Drama','Horror','Romance','Comedy')
+category_list
+```
+```{r}
+category="Action"
+
+path = file.path(getwd(), "dialogs",category)
+corpus <- Corpus(DirSource(path, recursive=T))
+```
+  
+W uzyskanym ürÛdle imiona bohaterÛw oraz opisy sA pisane samymi duøymi literami.
+Dlatego napisana zosta≥a niestandardowa funkcja dla preprocessingu, usuwajπca takie wystπpienia
+UsuniÍte bÍdzie w ten sposÛb rÛwnieø kilku okrzykÛw ale ich wp≥yw uznany jest za nieznaczny.
+ 
+```{r}
+remAllCap <- function (x){gsub("\\b[A-Z]+\\b", "", x)}
+corpus <- tm_map(corpus, remAllCap)
+```
+
+ 
+standardowe funkcjie data cleaning oraz zamaskowanie bardzo popularnego angielskiego przekleÒstwa:
+```{r}
+corpus <- tm_map(corpus, tolower)
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, c(stopwords("english")))
+corpus <- tm_map(corpus, stemDocument)
+remSwer <- function(x){gsub("fuck", "f**k", x)}
+corpus <- tm_map(corpus, remSwer)
+corpus <- tm_map(corpus, stripWhitespace)
+```
+
+   
+Utoworzenie Macierzy wyraøenie-dokument
+
+```{r}
+
+tdm <- TermDocumentMatrix(corpus)
+```
+  
+analiza pozytywnego lub negatywnego znaczenia dialogÛw na podstawie wystÍpowania s≥Ûw pozytywnych lub negatywnych. 
+
+Uøyta zosta≥a lekko zmodyfikowana funkcja przerabiana na zajÍciach. Przerobiony zosta≥ wynik funkcji jako rÛønica udzia≥u procentowego pozytywnych i negatywnych s≥Ûw do wszystkich negatywnych i pozytywnych s≥Ûw.
+Za s≥owniki negatywnych i pozytywnych s≥Ûw zosta≥y urzyta baza prezentowana w instrukcji do zajÍÊ.
+
+```{r}
+hu.liu.pos = scan(file.path(getwd(), "opinion-lexicon-English","positive-words.txt"),
+                  what='character', comment.char=';')
+hu.liu.neg = scan(file.path(getwd(), "opinion-lexicon-English","negative-words.txt"),
+                  what='character', comment.char=';')
+
+score.sentiment = function(sentences, pos.words, neg.words, .progress='none')
+{
+  require(plyr)
+  require(stringr)
+  scores = laply(sentences, function(sentence, pos.words, neg.words) {
+    word.list = str_split(sentence, '\\s+')
+    words = unlist(word.list)
+    pos.matches = match(words, pos.words)
+    neg.matches = match(words, neg.words)
+    pos.matches = !is.na(pos.matches)
+    neg.matches = !is.na(neg.matches)
+    score = ( sum(pos.matches)-sum(neg.matches))/(sum(pos.matches)+sum(neg.matches))# - 
+    return(score)
+  }, pos.words, neg.words, .progress=.progress )
+}
+```
+Funkcja zosta≥a uøyta do wczeúniej zaczytanego cia≥a:
+
+```{r, message=F}
+films = dir(path)
+max = length(films)
+
+i=1
+names = c()
+sentiment = c()
+
+for(file in films){
+
+  sample.text = corpus[[i]]$content
+  result = score.sentiment(sample.text, hu.liu.pos , hu.liu.neg)
+  # print(result[[1]])
+  names = c(names, gsub("_dialog.txt","",corpus[[i]]$meta$id))
+  sentiment = c(sentiment, result[[1]])
+  if(i==max){
+    break
+  }
+  i=i+1
+}
+df = data.frame(names, sentiment)
+df <- df %>% arrange(desc(sentiment)) %>% top_n(10)
+df
+```
+
+Na podstawie wynikÛw zosta≥a stworzona wizualizacja za pomocπ biblioteki 'wroldcloud2'
+
+```{r} 
+set.seed(123)
+m <- as.matrix(tdm)
+v <- sort(rowSums(m), decreasing=TRUE)
+words <- names(v)
+d <- data.frame(word=words, freq=v)
+#path.png = file.path(getwd(), "sample pictures/movie.png")
+path.png = file.path(getwd(), "sample pictures/action.png")
+pct <- wordcloud2(data = d, figPath = path.png, size = 1.5)
+```
+![Caption for the picture.](word_clod_action.png)
+
