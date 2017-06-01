@@ -27,10 +27,14 @@ remAllCap <- function (x){gsub("\\b[A-Z]+\\b", "", x)}
 
 #Funkcja dokonująca preprocessingu, używając przetwarzania potokowego.  
 preProcess <- function(corpus){
-     corpus %>% tm_map(removeWords, c(stopwords("SMART"))) %>% tm_map(removePunctuation) %>% tm_map(stripWhitespace) %>%
+     corpus %>% tm_map(removeWords, c(stopwords("SMART"))) 
+  %>% tm_map(removePunctuation) %>% 
+    tm_map(stripWhitespace) %>%
        tm_map(removeNumbers) %>% 
        tm_map(remAllCap) %>% 
-       tm_map(tolower) %>% tm_map(removeWords, c(stopwords("SMART"))) %>% tm_map(stemDocument)
+       tm_map(tolower) %>% 
+    tm_map(removeWords, c(stopwords("SMART"))) 
+  %>% tm_map(stemDocument)
 }
 
 category_list = c('Action','Drama','Horror','Romance','Comedy')
@@ -57,4 +61,4 @@ v <- sort(rowSums(m), decreasing=TRUE)
 head(v,15)
 words <- names(v)
 d <- data.frame(word=words, freq=v)
-wordcloud(d$word, d$freq,max.words=200, min.freq=20, colors=brewer.pal(6, "Dark2"))
+wordcloud(d$word, d$freq,max.words=200, min.freq=10, colors=brewer.pal(6, "Dark2"))
