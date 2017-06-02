@@ -10,13 +10,7 @@ library(wordcloud2)
 
 path = file.path(getwd(), "dialogs_selected/")
 category_list = dir(path)
-#category_list
-#category_list = c('Action','Drama','Horror','Romance','Comedy')
-#category_list
 
-#category="Action"
-
-#path = file.path(getwd(), "dialogs",category)
 corpus <- Corpus(DirSource(path, recursive=T))
 
 
@@ -84,7 +78,7 @@ while(i<=max){
   i=i+1
 }
 df = data.frame(names, pos, neg )
-df <- df %>% filter(pos >0 & neg >0) %>% distinct() %>% mutate(per_pos = pos/(pos+neg))
+df <- df %>% filter(pos >0.05 & neg >0.05) %>% distinct() %>% mutate(per_pos = pos/(pos+neg))
 df.pos <- df %>%  arrange(desc(per_pos)) 
 df.neg <- df %>%  arrange(per_pos) 
 top_n(df.pos, 15)
@@ -109,7 +103,7 @@ for.cloud = function(name, names, corpus_org){
   a3 <- annotate(sample.text, pos_tag_annotator, a1)
   a3w <- subset(a3, type=='word')
   max = length(a3w)
-  k <- 1
+  k = 1
   words = c()
   while(k<=max){
     p = unlist(a3w[k]$features)
@@ -125,15 +119,17 @@ for.cloud = function(name, names, corpus_org){
   tb <- tb %>% arrange(desc(freq))
   return(tb)
 }
-words.pos <- for.cloud('nottinghill', names, corpus_org)
+words.pos <- for.cloud('amadeus', names, corpus_org)
+head(words.pos)
 
 words.neg <- for.cloud('wildhogs', names, corpus_org)
+head(words.neg)
 
 path.png = file.path(getwd(), "sample pictures/movie.png")
 wordcloud2(data = words.pos, figPath = path.png, size = 1)
 
 
 path.png = file.path(getwd(), "sample pictures/play.png")
-wordcloud2(data = words.neg, figPath = path.png, size = 1)
+wordcloud2(data = words.neg, figPath = path.png, size = 1.5)
 
 
