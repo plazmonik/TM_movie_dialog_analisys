@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(cache=FALSE)
 ```
 
 ## biblioteki
@@ -20,22 +20,22 @@ library(SnowballC)
 library(wordcloud2)
 ```
 ## wstÍp
-
-èrÛd≥o dialogÛw https://nlds.soe.ucsc.edu/fc2
+Celem projektu jest znalezienie najbardziej pozytywnych filmÛw ze zbioru. 
+èrÛd≥o dialogÛw pochodzi z serwisu https://nlds.soe.ucsc.edu/fc2. Pliki podzielone sπ na kategorie:
 ```{r}
 
 path = file.path(getwd(), "dialogs/")
 category_list = dir(path)
 category_list
 ```
-
+W celu przyúpieszenia procesu ograniczono siÍ tylko do czÍúci kategorii.
 ```{r}
 
 path = file.path(getwd(), "dialogs_selected/")
 category_list = dir(path)
 category_list
 ```
-
+wszystkie filmy w podkategoriach zosta≥y zaimportowane do "korpusu"
 ```{r}
 corpus <- Corpus(DirSource(path, recursive=T))
 ```
@@ -50,7 +50,7 @@ corpus <- tm_map(corpus, remAllCap)
 ```
 
  
-standardowe funkcjie data cleaning oraz zamaskowanie bardzo popularnego angielskiego przekleÒstwa:
+Zastosowano seriÍ narzÍdzi do odpowiedniej obrÛbki wstÍpnej dialogÛw oraz zamaskowano bardzo popularnego angielskiego przekleÒstwa:
 ```{r}
 corpus <- tm_map(corpus, tolower)
 corpus <- tm_map(corpus, removePunctuation)
@@ -118,32 +118,32 @@ while(i<=max){
   neg = c(neg, result[2])
   i=i+1
 }
+```
+
+Wyniki ograniczono tylko do tych filmÛw w ktÛrych pozytywne i negatywne wyraøenia stanowi≥y co najmniej 5% wszystkich wyraøeÒ.
+```{r}
 df = data.frame(names, pos, neg )
-df <- df %>% filter(pos >0 & neg >0) %>% distinct() %>% mutate(per_pos = pos/(pos+neg))
+df <- df %>% filter(pos >0.5 & neg >0.5) %>% distinct() %>% mutate(per_pos = pos/(pos+neg))
 df.pos <- df %>%  arrange(desc(per_pos)) 
 df.neg <- df %>%  arrange(per_pos) 
 ```
-najbardziej pozytywne filmy w zbiorze
+W ten sposÛb uda≥o sie wyodrÍbniÊ najbardziej pozytywne filmy w zbiorze:
 ```{r}
 top_n(df.pos, 15)
 ```
 
-
-
-najbardziej negarywne filmy w zbiorze
+Oraz najbardziej negarywne filmy w zbiorze:
 ```{r}
 top_n(df.neg, -15)
 ```
-"
-A group of suburban biker wannabes looking for adventure hit the open road, but get more than they bargained for when they encounter a New Mexico gang called the Del Fuegos. 
-"
-from http://www.imdb.com
-
-
-funkcja do przygotowania word clouds:
+Ostatnim etapem jest wizualizacja czÍstoúci wystÍpowania s≥Ûw poprzez chmurÍ wyrazÛw. 
+Ca≥oúÊ przygotowania zosta≥π zamkniÍta w postaci funkcji:
 ```{r}
+
 for.cloud = function(name, names, corpus_org){
-  id <- match(name, names)
+  id = match(name, names)
+  print(corpus_org[[id]]$meta$id)
+  print(id)
   ##POS taging
   library(NLP)
   library(openNLP)
@@ -151,16 +151,15 @@ for.cloud = function(name, names, corpus_org){
   sent_token_annotator <-  Maxent_Sent_Token_Annotator()
   word_token_annotator <-  Maxent_Word_Token_Annotator()
   sample.text = corpus_org[[id]]$content
-  a1 <- annotate(sample.text,list(sent_token_annotator,word_token_annotator))
+  a1 = annotate(sample.text,list(sent_token_annotator,word_token_annotator))
   pos_tag_annotator <-  Maxent_POS_Tag_Annotator()
-  a3 <- annotate(sample.text, pos_tag_annotator, a1)
-  a3w <- subset(a3, type=='word')
+  a3 = annotate(sample.text, pos_tag_annotator, a1)
+  a3w = subset(a3, type=='word')
   max = length(a3w)
   k = 1
   words = c()
   while(k<=max){
     p = unlist(a3w[k]$features)
-    #if(p=="VB" || p=="NN"){
     if(p=="NN" || p=="VB"){
       word <- substr(sample.text,a3w[k]$start, a3w[k]$end)
     }
@@ -173,26 +172,23 @@ for.cloud = function(name, names, corpus_org){
   tb <- tb %>% arrange(desc(freq))
   return(tb)
 }
-words <- for.cloud('nottinghill', names, corpus_org)
-
 ```
-Na podstawie wynikÛw zosta≥a stworzona wizualizacja za pomocπ biblioteki 'wroldcloud2' dla filmÛw
+Poniøej przyk≥ad jednego z pozytywnych filmÛw: Amadeus
 
-pozytywny:
-Notting hill
-words <- for.cloud('nottinghill', names, corpus_org)
-
-oraz negatywny
-
-```{r} 
-#set.seed(123)
-#m <- as.matrix(tdm)
-#v <- sort(rowSums(m), decreasing=TRUE)
-#words <- names(v)
-#d <- data.frame(word=words, freq=v)
-#path.png = file.path(getwd(), "sample pictures/movie.png")
-#path.png = file.path(getwd(), "sample pictures/action.png")
-#pct <- wordcloud2(data = d, figPath = path.png, size = 1.5)
+```{r}
+words.pos <- for.cloud('amadeus', names, corpus_org)
+#path.png = file.path(getwd(), "sample pictures/play.png")
+#wordcloud2(data = words.neg, figPath = path.png, size = 1.5)
 ```
-![Caption for the picture.](word_clod_action.png)
+![Caption for the picture.](pictures/amadeus.png)
+oraz negatywny "Pine Apple Express"
 
+```{r}
+#words.neg <- for.cloud('pineappleexpress', names, corpus_org)
+path.png = file.path(getwd(), "sample pictures/movie.png")
+#wordcloud2(data = words.pos, figPath = path.png, size = 1)
+```
+![Caption for the picture.](pictures/pineappleexpress.png)
+
+Oraz bonusowy pozytywn "Notting Hill""
+![Caption for the picture.](pictures\nottinghill.png)
