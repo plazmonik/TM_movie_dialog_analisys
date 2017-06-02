@@ -1,8 +1,10 @@
 ---
 title: "subtittle_text_mining"
-author: "Adam Kolipiñski, Ludwik Przyrowski"
+author: "Adam KolipiÅ„ski, Ludwik Przyrowski"
 date: "27 maja 2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -180,7 +182,7 @@ words.pos <- for.cloud('amadeus', names, corpus_org)
 #path.png = file.path(getwd(), "sample pictures/play.png")
 #wordcloud2(data = words.neg, figPath = path.png, size = 1.5)
 ```
-![Caption for the picture.](pictures/amadeus.png)
+![Caption for the picture.](amadeus.png)
 oraz negatywny "Pine Apple Express"
 
 ```{r}
@@ -188,7 +190,7 @@ oraz negatywny "Pine Apple Express"
 path.png = file.path(getwd(), "sample pictures/movie.png")
 #wordcloud2(data = words.pos, figPath = path.png, size = 1)
 ```
-![Caption for the picture.](pictures/pineappleexpress.png)
+![Caption for the picture.](pineappleexpress.png)
 
 Oraz bonusowy pozytywn "Notting Hill""
-![Caption for the picture.](pictures\nottinghill.png)
+![Caption for the picture.](nottinghill.png)
