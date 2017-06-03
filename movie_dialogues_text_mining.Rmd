@@ -1,10 +1,10 @@
 ---
 title: "subtittle_text_mining"
-author: "Adam KolipiÅ„ski, Ludwik Przyrowski"
+author: "Adam KolipiÄ¹â€žski, Ludwik Przyrowski"
 date: "27 maja 2017"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -67,14 +67,6 @@ corpus <- tm_map(corpus, stripWhitespace)
 
 ```
 
-   
-Utoworzenie Macierzy wyra¿enie-dokument
-
-```{r}
-
-tdm <- TermDocumentMatrix(corpus)
-```
-  
 analiza pozytywnego lub negatywnego znaczenia dialogów na podstawie wystêpowania s³ów pozytywnych lub negatywnych. 
 
 U¿yta zosta³a lekko zmodyfikowana funkcja przerabiana na zajêciach. Przerobiony zosta³ wynik funkcji jako ró¿nica udzia³u procentowego pozytywnych i negatywnych s³ów do wszystkich negatywnych i pozytywnych s³ów.
@@ -125,7 +117,7 @@ while(i<=max){
 Wyniki ograniczono tylko do tych filmów w których pozytywne i negatywne wyra¿enia stanowi³y co najmniej 5% wszystkich wyra¿eñ.
 ```{r}
 df = data.frame(names, pos, neg )
-df <- df %>% filter(pos >0.5 & neg >0.5) %>% distinct() %>% mutate(per_pos = pos/(pos+neg))
+df <- df %>% filter(pos >0.05 & neg >0.05) %>% distinct() %>% mutate(per_pos = pos/(pos+neg))
 df.pos <- df %>%  arrange(desc(per_pos)) 
 df.neg <- df %>%  arrange(per_pos) 
 ```
